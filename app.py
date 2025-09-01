@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 
 # --- Load model & scaler ---
-model = joblib.load("model_malware.pkl")
+model = joblib.load("model_xgb.pkl")
 scaler = joblib.load("scaler.pkl")
 
 st.title("🕵️ Malware Domain Detector")
@@ -13,7 +13,7 @@ domain = st.text_input("Masukkan domain:", "example.com")
 
 if st.button("Deteksi"):
     # ---- TODO: ekstraksi fitur dari domain ----
-    # misalnya panjang domain
+
     features = {
         "length": len(domain),
         "digit_count": sum(c.isdigit() for c in domain),
