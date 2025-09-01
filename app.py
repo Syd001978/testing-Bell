@@ -8,7 +8,7 @@ from xgboost import XGBClassifier
 # -----------------------------
 # Load model, scaler, dan kolom
 # -----------------------------
-model = joblib.load("model_malware.pkl")
+model = joblib.load("model_xgb.pkl")
 scaler = joblib.load("scaler.pkl")
 training_cols = joblib.load("training_cols.pkl")
 
