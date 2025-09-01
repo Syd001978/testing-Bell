@@ -3,53 +3,59 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+from xgboost import XGBClassifier
 
-# --------------------------
-# Load model & scaler
-# --------------------------
+# -----------------------------
+# Load model, scaler, dan kolom
+# -----------------------------
 model = joblib.load("model_malware.pkl")
 scaler = joblib.load("scaler.pkl")
+training_cols = joblib.load("training_cols.pkl")
 
-# --------------------------
-# Define training columns (numeric only, sesuai training)
-# --------------------------
-training_cols = [
-    'Feature1', 'Feature2', 'Feature3',  # ganti dengan nama kolom numeric asli
-    # ...
-]
-
-# --------------------------
-# Streamlit UI
-# --------------------------
-st.title("Malware Domain Detector")
-
-st.write("Masukkan  domain untuk mendeteksi apakah domain malware atau tidak.")
-
-# Form input user
-with st.form("input_form"):
-    user_input = {}
+# -----------------------------
+# Fungsi ekstraksi fitur domain
+# -----------------------------
+def extract_features(domain):
+    """Ekstraksi fitur numerik dari domain (contoh sederhana)."""
+    features = {
+        "length": len(domain),
+        "num_digits": sum(c.isdigit() for c in domain),
+        "num_dashes": domain.count("-"),
+        "num_dots": domain.count("."),
+        "num_underscores": domain.count("_"),
+        # bisa ditambah fitur lain sesuai yang dipakai saat training
+    }
+    df = pd.DataFrame([features])
+    
+    # pastikan urutan kolom sesuai training
     for col in training_cols:
-        # semua numeric input
-        user_input[col] = st.number_input(f"{col}", value=0.0, step=1.0)
-    submitted = st.form_submit_button("Predict")
+        if col not in df.columns:
+            df[col] = 0  # kolom yang tidak ada di input diisi 0
+    df = df[training_cols]
+    
+    return df
 
-# --------------------------
-# Predict
-# --------------------------
-if submitted:
-    # Buat DataFrame dari input user
-    df_input = pd.DataFrame([user_input])
+# -----------------------------
+# Streamlit UI
+# -----------------------------
+st.title("Malware Domain Detection 🔒")
+st.write("Masukkan nama domain, dan mesin akan memprediksi apakah malware atau tidak.")
 
-    # Pastikan urutan kolom sesuai training
-    df_input = df_input[training_cols]
+domain_input = st.text_input("Domain:")
 
-    # Transformasi menggunakan scaler
-    X_scaled = scaler.transform(df_input)
+if st.button("Prediksi"):
+    if not domain_input:
+        st.warning("Tolong masukkan domain terlebih dahulu!")
+    else:
+        # ekstraksi fitur
+        df_input = extract_features(domain_input)
 
-    # Prediksi
-    pred = model.predict(X_scaled)[0]
-    pred_proba = model.predict_proba(X_scaled)[0]
+        # scaling
+        X_scaled = scaler.transform(df_input)
 
-    # Tampilkan hasil
-    st.write(f"**Prediksi:** {'Malware' if pred==1 else 'Non-Malware'}")
-    st.write(f"**Probabilitas:** Malware: {pred_proba[1]:.2f}, Non-Malware: {pred_proba[0]:.2f}")
+        # prediksi
+        pred = model.predict(X_scaled)[0]
+        proba = model.predict_proba(X_scaled)[0].max()
+
+        st.write(f"**Hasil Prediksi:** {pred}")
+        st.write(f"**Probabilitas:** {proba:.2f}")
