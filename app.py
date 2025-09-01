@@ -57,5 +57,9 @@ if st.button("Prediksi"):
         pred = model.predict(X_scaled)[0]
         proba = model.predict_proba(X_scaled)[0].max()
 
-        st.write(f"**Hasil Prediksi:** {pred}")
+        # mapping label ke teks
+        label_mapping = {0: "Tidak Malware", 1: "Malware"}
+        pred_label = label_mapping.get(pred, "Tidak Diketahui")
+
+        st.write(f"**Hasil Prediksi:** {pred_label}")
         st.write(f"**Probabilitas:** {proba:.2f}")
