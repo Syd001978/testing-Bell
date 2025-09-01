@@ -1,34 +1,55 @@
+# app.py
 import streamlit as st
-import joblib
 import pandas as pd
+import numpy as np
+import joblib
 
-# --- Load model & scaler ---
-model = joblib.load("model_xgb.pkl")
+# --------------------------
+# Load model & scaler
+# --------------------------
+model = joblib.load("model_malware.pkl")
 scaler = joblib.load("scaler.pkl")
 
-st.title("🕵️ Malware Domain Detector")
+# --------------------------
+# Define training columns (numeric only, sesuai training)
+# --------------------------
+training_cols = [
+    'Feature1', 'Feature2', 'Feature3',  # ganti dengan nama kolom numeric asli
+    # ...
+]
 
-# Input domain
-domain = st.text_input("Masukkan domain:", "example.com")
+# --------------------------
+# Streamlit UI
+# --------------------------
+st.title("Malware Domain Detector")
 
-if st.button("Deteksi"):
-    # ---- TODO: ekstraksi fitur dari domain ----
+st.write("Masukkan  domain untuk mendeteksi apakah domain malware atau tidak.")
 
-    features = {
-        "length": len(domain),
-        "digit_count": sum(c.isdigit() for c in domain),
-        "dot_count": domain.count("."),
-    }
-    df_input = pd.DataFrame([features])
+# Form input user
+with st.form("input_form"):
+    user_input = {}
+    for col in training_cols:
+        # semua numeric input
+        user_input[col] = st.number_input(f"{col}", value=0.0, step=1.0)
+    submitted = st.form_submit_button("Predict")
 
-    # Scaling
+# --------------------------
+# Predict
+# --------------------------
+if submitted:
+    # Buat DataFrame dari input user
+    df_input = pd.DataFrame([user_input])
+
+    # Pastikan urutan kolom sesuai training
+    df_input = df_input[training_cols]
+
+    # Transformasi menggunakan scaler
     X_scaled = scaler.transform(df_input)
 
-    # Predict
+    # Prediksi
     pred = model.predict(X_scaled)[0]
-    prob = model.predict_proba(X_scaled)[0]
+    pred_proba = model.predict_proba(X_scaled)[0]
 
-    st.write(f"**Hasil Deteksi:** {'⚠️ Malware' if pred==1 else '✅ Aman'}")
-    st.write("Probabilitas:", prob)
-    st.write(f"- Probabilitas Aman: {prob[0]:.2%}")
-    st.write(f"- Probabilitas Malware: {prob[1]:.2%}")
+    # Tampilkan hasil
+    st.write(f"**Prediksi:** {'Malware' if pred==1 else 'Non-Malware'}")
+    st.write(f"**Probabilitas:** Malware: {pred_proba[1]:.2f}, Non-Malware: {pred_proba[0]:.2f}")
